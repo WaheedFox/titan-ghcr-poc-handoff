@@ -1,70 +1,71 @@
-# Task 5.1 — GHCR Registry PoC Handoff
+# Task 5.1 — تسليم إثبات مفهوم سجل GHCR
 
-**Updated:** 2026-10-03  
-**Status:** Partial; local OCI model tested, GHCR not tested directly.  
-**Authorization:** Standalone GHCR PoC is authorized; isolate it from Titan/Titan-3 and use synthetic data only.
+**تاريخ التحديث:** 2026-10-03  
+**الحالة:** جزئية؛ اختُبر نموذج OCI محليًا، ولم يُختبر GHCR مباشرة.  
+**التفويض:** يُسمح بـPoC مستقل لـGHCR؛ يُعزل عن Titan/Titan-3 وتُستخدم فيه بيانات اصطناعية فقط.
 
-## Current state
-The local OCI-layout/model checks passed, but no GHCR package has been created, pushed, or pulled. Current evidence is insufficient for a production suitability claim; provisional final classification is D — another targeted experiment is required.
+## الحالة الحالية
+اجتازت فحوص نموذج OCI/layout المحلية، لكن لم تُنشأ أي حزمة GHCR ولم تُرفع أو تُسحب. الأدلة الحالية غير كافية لإثبات الملاءمة للإنتاج؛ والتصنيف النهائي المؤقت هو D — التجربة غير كافية ويلزم اختبار موجّه آخر.
 
-## Tested locally
-A temporary Node.js script hand-built an OCI Image Layout v1.0.0 in /tmp and removed it after the test. No Titan/project source files were changed.
-- One root artifact and two shard artifacts; 3 OCI manifest envelopes parsed.
-- Manifest media type: application/vnd.oci.image.manifest.v1+json. Custom artifact types: application/vnd.titan.registry.root.v1+json and application/vnd.titan.registry.shard.v1+json. Config: application/vnd.oci.empty.v1+json. Root/shard ref-name annotations were included.
-- Root payload referenced shard manifests by digest. 16 descriptor digest/size checks passed locally.
-- Synthetic indexed lookup read one selected shard out of two; an active record was found and a tombstone projected as tombstone.
-- A synthetic 100 KiB blob was hashed and verified.
-- Retry/dedup was simulated in memory: one failure before commit, then retry and replay; stable digest and one receipt. This is publisher-model behavior, not GHCR evidence.
-- No ORAS/registry client, compressed layer, actual pull, or registry API was used.
+## ما اختُبر محليًا
+أنشأ سكربت مؤقت بـNode.js يدويًا OCI Image Layout v1.0.0 داخل `/tmp`، ثم أزاله بعد الاختبار. لم تتغير ملفات مصدر Titan/المشروع.
+- أُنشئ artifact واحد للجذر واثنان للشظايا؛ وقُرئت 3 أغلفة manifest من OCI.
+- نوع وسائط manifest: `application/vnd.oci.image.manifest.v1+json`. أنواع artifact المخصصة: `application/vnd.titan.registry.root.v1+json` و`application/vnd.titan.registry.shard.v1+json`. نوع Config: `application/vnd.oci.empty.v1+json`. أُدرجت تعليقات `ref-name` للجذر/الشظايا.
+- أشار payload الجذر إلى manifests الشظايا باستخدام digest. اجتازت محليًا 16 عملية تحقق من digest/size للواصفات.
+- قرأ lookup اصطناعي مفهرس شظية واحدة محددة من أصل اثنتين؛ وعُثر على record نشط، وعُرض tombstone كحالة tombstone.
+- حُسب hash لـblob اصطناعي بحجم 100 KiB وتحققت صحته.
+- حُوكي Retry/dedup في الذاكرة: إخفاق واحد قبل commit، ثم إعادة المحاولة وإعادة التشغيل؛ digest ثابت وإيصال واحد. هذا سلوك لنموذج publisher وليس دليلًا على GHCR.
+- لم تُستخدم ORAS أو أداة عميل registry، ولم تُختبر طبقة مضغوطة أو عملية pull فعلية أو Registry API.
 
-## Results and evidence limits
-| Topic | Current evidence | Status |
+## النتائج وحدود الأدلة
+| الموضوع | الأدلة الحالية | الحالة |
 |---|---|---|
-| OCI structure, descriptors, custom media types | Hand-authored local layout only | CONFIRMED locally; GHCR acceptance NEEDS EXPERIMENT |
-| Root → shard digests and selective lookup | One of two local shards read | CONFIRMED in the model; remote pull path untested |
-| SHA-256 stability | Local content hashing | CONFIRMED locally; GHCR dedup/tag behavior untested |
-| Retry/idempotency and receipts | In-memory simulation only | NEEDS EXPERIMENT on GHCR; do not attribute publisher semantics to GHCR |
-| Concurrent root updates/generations | Not run | UNRESOLVED |
-| Anonymous public pull/package visibility | No POC package | FEASIBLE per GitHub docs; not empirically confirmed here |
-| Size/batching | 100 KiB local blob only | Actual 100 KiB–1 GiB transfers/timings UNRESOLVED |
-| Tombstone/deletion/retention | Local projection only | Storage erasure and persistence UNRESOLVED |
-| Pages Explorer, CORS/proxy/cache | Not run | UNRESOLVED |
-| GHCR as complete Registry | Not the tested role; query, policy, identity, privacy, and moderation are separate | REJECTED for this architecture |
-| External publisher/relay | Architecture only | FEASIBLE, not implemented or tested |
+| بنية OCI والواصفات وأنواع media type المخصصة | layout محلي أُنشئ يدويًا فقط | CONFIRMED محليًا؛ قبول GHCR يحتاج تجربة NEEDS EXPERIMENT |
+| digests من root إلى shards وlookup انتقائي | قُرئت شظية محلية واحدة من اثنتين | CONFIRMED في النموذج؛ مسار pull البعيد غير مختبر |
+| ثبات SHA-256 | حساب hash للمحتوى محليًا | CONFIRMED محليًا؛ سلوك GHCR في dedup/tag غير مختبر |
+| Retry/idempotency والإيصالات | محاكاة داخل الذاكرة فقط | NEEDS EXPERIMENT على GHCR؛ لا تنسب سلوك publisher إلى GHCR |
+| تحديثات root/generations المتزامنة | لم يُنفّذ | UNRESOLVED |
+| pull عام مجهول الهوية/ظهور الحزمة | لا توجد حزمة PoC | FEASIBLE بحسب وثائق GitHub؛ لم يُؤكّد تجريبيًا هنا |
+| الحجم وbatching | blob محلي بحجم 100 KiB فقط | أحجام/أزمنة النقل الفعلية من 100 KiB إلى 1 GiB ما زالت UNRESOLVED |
+| tombstone والحذف والاحتفاظ | إسقاط محلي فقط | محو التخزين واستمراريته UNRESOLVED |
+| Pages Explorer وCORS/proxy/cache | لم يُنفّذ | UNRESOLVED |
+| GHCR بوصفه Registry كاملًا | ليس الدور الذي اختُبر؛ query وpolicy وidentity وprivacy وmoderation طبقات منفصلة | REJECTED لهذه المعمارية |
+| publisher/relay خارجي | تحليل معماري فقط | FEASIBLE، لم يُنفّذ أو يُختبر |
 
-## Technical constraints and credentials
-- Environment observed: Node 24.13.0, Python 3.13.11, Nix; Docker CLI 27.5.1 but Docker daemon unavailable; ORAS absent.
-- GitHub App connection has repo access but no packages scope. Listing user container packages returned 403 requiring read:packages, including after one reauthorization/retry.
-- requestSecrets was undefined in both ordinary and impure CodeExecution; replit secrets list returned PermissionDenied. No PAT/token was supplied, stored, or used. Never request or accept credentials in chat.
-- GHCR operations require a secure registry credential path; GitHub docs describe classic PAT package scopes: read:packages for metadata/read, write:packages for push, delete:packages for cleanup. Use only required package scopes; avoid broad repo scope if possible.
-- GET /repos/WaheedFox/Titan returned 404 for this connection; this does not prove the repository is absent. WaheedFox/Titan-3 was accessible with push/admin permission but remains unchanged.
-- Official documentation previously reviewed: GHCR supports public anonymous access and documents a 10 GB per-layer maximum and 10-minute upload deadline; these are documented limits, not measured results. GitHub Pages documentation notes a 1 GB site size and 100 GB/month soft bandwidth limit; no GHCR-to-Pages integration was tested.
+## القيود التقنية وبيانات الاعتماد
+- البيئة المرصودة: Node 24.13.0 وPython 3.13.11 وNix؛ إصدار Docker CLI هو 27.5.1 لكن Docker daemon غير متاح؛ وORAS غير موجود.
+- يملك اتصال GitHub App صلاحية repo، لكنه لا يملك packages scope. أعاد استعراض حزم المستخدم في container packages استجابة 403 التي تتطلب `read:packages`، حتى بعد إعادة توصيل واحدة وإعادة المحاولة.
+- لا يوجد secure registry credential path متاح، ولم يُستخدم أو يُخزّن أي token.
+- تتطلب عمليات GHCR مسارًا آمنًا لاعتماد registry؛ وتوضح وثائق GitHub نطاقات classic PAT الخاصة بالحزم: `read:packages` للبيانات الوصفية/القراءة، و`write:packages` للرفع، و`delete:packages` للتنظيف. استخدم نطاقات الحزم المطلوبة فقط، وتجنّب نطاق repo الواسع إن أمكن.
+- كان المستودع `WaheedFox/Titan-3` متاحًا بصلاحية push/admin، لكنه بقي دون تغيير.
+- سبق الاطلاع على الوثائق الرسمية: يدعم GHCR الوصول العام المجهول ويوثّق حدًا أقصى قدره 10 GB لكل layer ومهلة رفع قدرها 10 دقائق؛ وهذه حدود موثقة وليست نتائج مقاسة. وتشير وثائق GitHub Pages إلى حد حجم موقع قدره 1 GB وحد نطاق ترددي مرن قدره 100 GB/month؛ ولم يُختبر التكامل بين GHCR وPages.
 
-## Allowed scope and prohibitions
-- Use only synthetic data and one uniquely named standalone package such as ghcr.io/waheedfox/titan-ghcr-poc-<unique> if secure credentials become available.
-- Never publish to or modify WaheedFox/Titan or Titan-3. No changes to Titan source, ADRs, CONTRACT, ROADMAP, or the existing investigation; no production infrastructure.
-- User approved public anonymous-read testing and cleanup of only the created test package. Make it public only for that test; downloaded copies and caches may persist. No package has yet been created.
+## النطاق المسموح والمحظورات
+- تُستخدم بيانات اصطناعية فقط وحزمة مستقلة واحدة باسم فريد، مثل `ghcr.io/waheedfox/titan-ghcr-poc-<unique>`، إذا أصبح مسار اعتماد آمن متاحًا.
+- يُحظر النشر إلى `WaheedFox/Titan` أو `Titan-3` أو تعديلهما. لا تغييرات على Titan source أو ADRs أو CONTRACT أو ROADMAP أو التحقيق الحالي؛ ولا بنية تحتية للإنتاج.
+- أجاز المستخدم اختبار القراءة العامة المجهولة وتنظيف الحزمة التجريبية المُنشأة فقط. تُجعل عامة لهذا الاختبار وحده؛ وقد تبقى النسخ المنزّلة وcaches. لم تُنشأ أي حزمة حتى الآن.
 
-## Architecture context
-Existing investigation: docs/internal/investigations/shared-community-message-links-registry.md (source snapshot 7c43f11627a06c4341bc8aab45ba0fc3ce9b8369). It describes local SQLite per runtime, no remote publication or /link fallback, and titan_id as local rather than globally unique. ctx.send()/ctx.reply() identity registration is post-send and best-effort. GitHub/GHCR cannot prove Telegram delivery or enforce a compliant runtime.
-Recommended shape remains:
+## السياق المعماري
+التحقيق القائم: `docs/internal/investigations/shared-community-message-links-registry.md` (لقطة المصدر `7c43f11627a06c4341bc8aab45ba0fc3ce9b8369`). يصف SQLite محلية لكل runtime، من دون نشر بعيد أو fallback لـ`/link`، ويعامل `titan_id` كمعرّف محلي لا عالمي فريد. تسجيل الهوية عبر `ctx.send()`/`ctx.reply()` يحدث بعد الإرسال وبأفضل جهد. لا يستطيع GitHub/GHCR إثبات تسليم Telegram أو فرض runtime ملتزم بالعقد.
+يبقى الشكل الموصى به:
 ```text
-Titan Runtime → local durable identity/outbox → trusted provider-agnostic publisher/relay → GHCR storage (shards/index/root) → separate query/Explorer/privacy/moderation
+Titan Runtime → هوية/outbox محلية دائمة → publisher/relay موثوق ومحايد تجاه المزوّد → تخزين GHCR (الشظايا/الفهارس/root) → query/Explorer/الخصوصية والإشراف المنفصلة
 ```
-Keep registration, publisher acceptance, registry publication, Telegram verification, and public visibility distinct. PUBLIC / RESTRICTED / PRIVATE projections must remain separate. A tombstone is not proof of erasure from immutable blobs, downloads, or caches.
+يجب إبقاء التسجيل، وقبول publisher، والنشر إلى registry، والتحقق من Telegram، والظهور العام أمورًا منفصلة. يجب أن تبقى إسقاطات PUBLIC / RESTRICTED / PRIVATE منفصلة. لا يثبت tombstone محو البيانات من blobs غير القابلة للتغيير أو التنزيلات أو caches.
 
-## Next step
-If a secure Secrets path becomes available in this environment, use a short-lived classic PAT with only required package scopes, then test a unique isolated package: real OCI push/pull and media-type acceptance; anonymous pull; digest and same/different-content retry behavior; two publishers racing to update root; shard-only lookup; tombstone versus actual package deletion; and synthetic sizes 100 KiB, 1 MiB, 10 MiB, 100 MiB, and 1 GiB only if safe and practical. Record methods, timings, and failures. Delete only the package created for this test. If secure credential intake remains unavailable, stop before registry writes and deliver a local-only report.
+## الخطوة التالية
+إذا أصبح مسار Secrets آمن متاحًا في هذه البيئة، فاستخدم classic PAT قصير العمر مع نطاقات الحزم المطلوبة فقط، ثم اختبر حزمة معزولة وفريدة: push/pull حقيقي لـOCI وقبول media type؛ وpull مجهول الهوية؛ وسلوك retry للمحتوى ذي digest نفسه والمختلف؛ وتنافس publisherين على تحديث root؛ وlookup للشظية وحدها؛ وtombstone مقابل الحذف الفعلي للحزمة؛ وأحجام اصطناعية 100 KiB و1 MiB و10 MiB و100 MiB و1 GiB فقط إذا كان ذلك آمنًا وعمليًا. سجّل الطرق والأزمنة والإخفاقات. احذف الحزمة المنشأة لهذا الاختبار فقط. إذا ظل إدخال الاعتماد الآمن غير متاح، فتوقف قبل أي كتابة إلى registry وقدّم تقريرًا يقتصر على الاختبار المحلي.
 
-## Final judgment criteria
-- A — GHCR suitable as primary public storage.
-- B — GHCR usable only as limited/secondary storage.
-- C — GHCR should be rejected.
-- D — experiment insufficient; another targeted experiment required.
-Current evidence supports **D** only. Final report must distinguish CONFIRMED, FEASIBLE, NEEDS EXPERIMENT, UNRESOLVED, and REJECTED, and assess GHCR storage, complete Registry, Pages Explorer, publisher, visibility projections, and registry identity model.
+## معايير الحكم النهائي
+تنطبق خيارات A/B/C/D أدناه على صلاحية GHCR بوصفه طبقة تخزين فقط، ولا تصنّف صلاحية معمارية Community Registry نفسها.
+- A — GHCR مناسب بوصفه طبقة التخزين العامة الأساسية.
+- B — لا يصلح GHCR إلا طبقة تخزين محدودة/ثانوية.
+- C — ينبغي رفض GHCR بوصفه طبقة تخزين.
+- D — التجربة غير كافية؛ يلزم اختبار موجّه آخر.
+تدعم الأدلة الحالية **D** فقط. يجب أن يميّز التقرير النهائي بين CONFIRMED وFEASIBLE وNEEDS EXPERIMENT وUNRESOLVED وREJECTED، وأن يقيّم كلًا على حدة: تخزين GHCR، وRegistry الكامل، وPages Explorer، وpublisher، وإسقاطات الظهور، ونموذج هوية registry.
 
-## References
+## المراجع
 - GHCR: https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry
 - GitHub Packages REST API/scopes: https://docs.github.com/en/rest/packages/packages?apiVersion=2022-11-28
-- GitHub Pages limits: https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits
-- Original Task 5.1 attachment in prior workspace: attached_assets/Pasted-Task-5-1-GHCR-Registry-Proof-of-Concept--1790964963253_1790964963260.txt.
+- حدود GitHub Pages: https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits
+- مرفق Task 5.1 الأصلي في مساحة العمل السابقة: `attached_assets/Pasted-Task-5-1-GHCR-Registry-Proof-of-Concept--1790964963253_1790964963260.txt`
